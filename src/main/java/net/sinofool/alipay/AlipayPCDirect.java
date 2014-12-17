@@ -10,7 +10,7 @@ import net.sinofool.alipay.base.StringPair;
 
 public class AlipayPCDirect extends AbstractAlipay {
 
-    public class PCURLs {
+    public static class PCURLs {
         public String notifyURL;
         public String returnURL;
         public String errorNotifyURL;

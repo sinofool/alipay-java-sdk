@@ -9,7 +9,7 @@ import net.sinofool.alipay.base.StringPair;
 
 public class AlipayWapDirect extends AbstractAlipay {
 
-    public class WAPURLs {
+    public static class WAPURLs {
         public String callbackURL;
     }
 
@@ -45,14 +45,16 @@ public class AlipayWapDirect extends AbstractAlipay {
     }
 
     public String create(final String tradeId, final String subject, final double total, final WAPURLs u) {
-        String auth = createWapTradeDirect(tradeId, subject, total, u);
+        //TODO use host not gateway;
+        String auth = http.get(config.getGateway(), 443, "https",
+                config.getGateway() + createWapTradeDirect(tradeId, subject, total, u));
         String token = verifyAndExtract(auth);
         return createWapAuthAndExecute(token);
     }
 
     private String verifyAndExtract(String auth) {
-        
-        return null;
+        //TODO extract;
+        return auth;
     }
 
     private String createWapTradeDirect(final String tradeId, final String subject, final double total, final WAPURLs u) {
