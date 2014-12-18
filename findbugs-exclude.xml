@@ -2,4 +2,14 @@
 	<Match>
 		<Package name="~^net\.sinofool\.alipay\.thirdparty\..*" />
 	</Match>
+	<Match>
+		<Class name="net.sinofool.alipay.AlipayPCNotifyData" />
+		<Method name="parseBoolean" />
+		<Bug pattern="NP_BOOLEAN_RETURN_NULL" />
+	</Match>
+	<Match>
+		<Class name="net.sinofool.alipay.AlipayPCNotifyData" />
+		<Method name="getNotifyTime" />
+		<Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" />
+	</Match>
 </FindBugsFilter>
