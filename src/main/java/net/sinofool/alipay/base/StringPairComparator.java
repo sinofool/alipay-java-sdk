@@ -9,7 +9,7 @@ public class StringPairComparator implements Comparator<StringPair>, Serializabl
 
     @Override
     public int compare(StringPair o1, StringPair o2) {
-        return o1.first().compareTo(o2.first());
+        return o1.getFirst().compareTo(o2.getFirst());
     }
 
 }

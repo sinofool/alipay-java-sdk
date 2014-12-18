@@ -2,18 +2,22 @@ package net.sinofool.alipay.base;
 
 public class StringPair {
     private final String first;
-    private final String second;
+    private String second;
 
     public StringPair(final String first, final String second) {
         this.first = first;
         this.second = second;
     }
 
-    public String first() {
+    public String getFirst() {
         return first;
     }
 
-    public String second() {
+    public void setSecond(String second) {
+        this.second = second;
+    }
+
+    public String getSecond() {
         return second;
     }
 

@@ -28,6 +28,10 @@ public class AlipayPCDirect extends AbstractAlipay {
         super(config);
     }
 
+    public String getPCActionURL() {
+        return "https://mapi.alipay.com/gateway.do?_input_charset=utf-8";
+    }
+
     public List<StringPair> createDirectPay(final String tradeId, final String subject, final double total, PCURLs u) {
         List<StringPair> p = new ArrayList<StringPair>();
         // Required, sign and sign_type at last
@@ -46,9 +50,14 @@ public class AlipayPCDirect extends AbstractAlipay {
         p.add(new StringPair("payment_type", "1"));
         p.add(new StringPair("total_fee", String.valueOf(total)));
         p.add(new StringPair("seller_id", config.getPartnerId()));
-
-        String sign = signMD5(p);
-        p.add(new StringPair("sign_type", "MD5"));
+        String sign;
+        if (preferRSA) {
+            sign = signRSA(p);
+            p.add(new StringPair("sign_type", "RSA"));
+        } else {
+            sign = signMD5(p);
+            p.add(new StringPair("sign_type", "MD5"));
+        }
         p.add(new StringPair("sign", sign));
         return p;
     }
@@ -67,7 +76,6 @@ public class AlipayPCDirect extends AbstractAlipay {
 
     public boolean verify(final Map<String, String> parameterMap) {
         List<StringPair> parameterList = new ArrayList<StringPair>();
-
         for (Entry<String, String> entry : parameterMap.entrySet()) {
             if ("sign".equalsIgnoreCase(entry.getKey())) {
                 continue;
@@ -77,7 +85,11 @@ public class AlipayPCDirect extends AbstractAlipay {
             }
             parameterList.add(new StringPair(entry.getKey(), entry.getValue()));
         }
-        String sign = signMD5(parameterList);
-        return parameterMap.get("sign").equals(sign);
+        if (parameterMap.get("sign_type").equals("RSA")) {
+            return verifyRSA(parameterMap.get("sign"), parameterList);
+        } else {
+            String sign = signMD5(parameterList);
+            return parameterMap.get("sign").equals(sign);
+        }
     }
 }
