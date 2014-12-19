@@ -1,6 +1,6 @@
 package net.sinofool.alipay.base;
 
-public class StringPair {
+public class StringPair implements Comparable<StringPair> {
     private final String first;
     private String second;
 
@@ -21,4 +21,25 @@ public class StringPair {
         return second;
     }
 
+    @Override
+    public int compareTo(StringPair o) {
+        return first.compareTo(o.first);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj instanceof StringPair) {
+            StringPair p = (StringPair) obj;
+            return first.equals(p.first) && second.equals(p.second);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return first.hashCode() ^ second.hashCode();
+    }
 }

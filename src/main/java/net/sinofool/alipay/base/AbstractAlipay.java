@@ -18,7 +18,6 @@ import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Collections;
 import java.util.List;
 
 import javax.crypto.BadPaddingException;
@@ -75,12 +74,7 @@ public abstract class AbstractAlipay {
         return null;
     }
 
-    private void sortKeys(final List<StringPair> p) {
-        Collections.sort(p, new StringPairComparator());
-    }
-
     protected String signMD5(final List<StringPair> p) {
-        sortKeys(p);
         String param = join(p, false);
         String sign = md5Sign(param + config.getMD5KEY());
         LOG.trace("Signing {}", param);
@@ -88,16 +82,18 @@ public abstract class AbstractAlipay {
     }
 
     protected String signRSA(final List<StringPair> p) {
-        sortKeys(p);
         String param = join(p, false);
         String sign = rsaSign(param);
         return sign;
     }
 
     protected boolean verifyRSA(String sign, List<StringPair> p) {
-        sortKeys(p);
         String param = join(p, false);
         return rsaVerify(param, sign);
+    }
+
+    protected boolean verifyMD5(String sign, List<StringPair> p) {
+        return sign.equals(signMD5(p));
     }
 
     protected String join(final List<StringPair> p, boolean encode) {
@@ -111,8 +107,8 @@ public abstract class AbstractAlipay {
                 try {
                     buff.append(URLEncoder.encode(p.get(i).getSecond(), "utf-8"));
                 } catch (UnsupportedEncodingException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    LOG.warn("Cannot encode {}", p.get(i).getSecond());
+                    throw new AlipayException(e);
                 }
             } else {
                 buff.append(p.get(i).getSecond());
