@@ -4,12 +4,13 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
 import net.sinofool.alipay.base.AbstractAlipay;
+import net.sinofool.alipay.base.GroupStringPair;
 import net.sinofool.alipay.base.StringPair;
+import net.sinofool.alipay.dict.AlipayWapRequestCreateDict;
 
 import org.xml.sax.SAXException;
 
@@ -26,7 +27,7 @@ public class WapDirectSDK extends AbstractAlipay {
     }
 
     public AlipayRequestData makeSimpleWapTradeDirect(final String tradeId, final String subject, final double total,
-            final String callBackUrl) {
+            final String callBackUrl, final String notifyUrl, final String merchantUrl) {
         AlipayRequestData a = new AlipayRequestData();
         a.setString("service", "alipay.wap.trade.create.direct");
         a.setString("format", "xml");
@@ -38,7 +39,9 @@ public class WapDirectSDK extends AbstractAlipay {
         a.setReqString("out_trade_no", tradeId);
         a.setReqString("total_fee", String.valueOf(total));
         a.setReqString("seller_account_name", config.getSellerAccount());
-        a.setReqString("call_back_url", callBackUrl);
+        a.setReqString(AlipayWapRequestCreateDict.REQUIRED_REQDATA.CALL_BACK_URL, callBackUrl);
+        a.setReqString(AlipayWapRequestCreateDict.OPTIONAL_REQDATA.NOTIFY_URL, notifyUrl);
+        a.setReqString(AlipayWapRequestCreateDict.OPTIONAL_REQDATA.MERCHANT_URL, merchantUrl);
         return a;
     }
 
@@ -72,7 +75,7 @@ public class WapDirectSDK extends AbstractAlipay {
         List<StringPair> p = sign(request.getSortedParameters());
         try {
             String auth = http.get("wappaygw.alipay.com", 443, "https", "/service/rest.htm?" + join(p, true));
-            Map<String, String> params = AlipayResponseData.parse(auth);
+            GroupStringPair params = parseQueryString(auth);
             decrypt(params);
             AlipayResponseData res = AlipayResponseData.parse(params);
             boolean verified = false;
@@ -84,7 +87,7 @@ public class WapDirectSDK extends AbstractAlipay {
             if (!verified) {
                 return null;
             }
-            String token = res.getResString("request_token");
+            String token = res.getExtraString("request_token");
             if (token == null) {
                 LOG.trace("Cannot find token in response");
                 return null;
@@ -106,17 +109,48 @@ public class WapDirectSDK extends AbstractAlipay {
         }
     }
 
-    private void decrypt(Map<String, String> params) {
-        if (preferRSA && params.get("sec_id").equals(SIGN_WAP_RSA)) {
-            params.put("res_data", decrypt(params.get("res_data")));
+    public void decrypt(final GroupStringPair params) {
+        if (!preferRSA) {
+            return;
+        }
+        String sec = params.get("sec_id");
+        if (sec == null || !SIGN_WAP_RSA.equals(sec)) {
+            return;
+        }
+        if (params.get("res_data") != null) {
+            String value = params.get("res_data");
+            params.update("res_data", decrypt(value));
+        } else if (params.get("notify_data") != null) {
+            String value = params.get("notify_data");
+            params.update("notify_data", decrypt(value));
         }
     }
 
-    public boolean verify(final AlipayResponseData response) {
-        List<StringPair> parameterList = response.getSortedParameters("sign");
-        if (response.getString("sec_id").equals(SIGN_WAP_RSA)) {
+    public boolean verifyCallback(final AlipayResponseData response) {
+        List<StringPair> parameterList = response.getOrderedParameters("sign", "sign_type");
+        // This parameter "sign_type" is not documented.
+        String type = response.getString("sign_type");
+        if (type.equals(SIGN_WAP_RSA)) {
             return verifyRSA(response.getString("sign"), parameterList);
-        } else if (response.getString("sec_id").equals(SIGN_WAP_MD5)) {
+        } else if (type.equals(SIGN_WAP_MD5)) {
+            return verifyMD5(response.getString("sign"), parameterList);
+        } else {
+            return false;
+        }
+    }
+
+    public boolean verifyNotify(final AlipayResponseData response) {
+        List<StringPair> parameterList = response.getOrderedParameters("sign");
+        String type = response.getString("sec_id");
+        if (type.equals(SIGN_WAP_RSA)) {
+            StringBuilder content = new StringBuilder();
+            content.append("service=").append(response.getString("service"));
+            content.append("&v=").append(response.getString("v"));
+            content.append("&sec_id=").append(response.getString("sec_id"));
+            content.append("&notify_data=").append(response.getString("notify_data"));
+            return rsaVerify(content.toString(), response.getString("sign"));
+            // return verifyRSA(response.getString("sign"), parameterList);
+        } else if (type.equals(SIGN_WAP_MD5)) {
             return verifyMD5(response.getString("sign"), parameterList);
         } else {
             return false;

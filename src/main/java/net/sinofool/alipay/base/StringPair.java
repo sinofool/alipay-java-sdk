@@ -33,13 +33,13 @@ public class StringPair implements Comparable<StringPair> {
         }
         if (obj instanceof StringPair) {
             StringPair p = (StringPair) obj;
-            return first.equals(p.first) && second.equals(p.second);
+            return first.equals(p.first);
         }
         return false;
     }
 
     @Override
     public int hashCode() {
-        return first.hashCode() ^ second.hashCode();
+        return first.hashCode();
     }
 }

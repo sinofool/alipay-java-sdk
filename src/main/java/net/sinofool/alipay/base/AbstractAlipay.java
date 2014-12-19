@@ -89,6 +89,8 @@ public abstract class AbstractAlipay {
 
     protected boolean verifyRSA(String sign, List<StringPair> p) {
         String param = join(p, false);
+        LOG.trace("verifyRSA sing={}", sign);
+        LOG.trace("verifyRSA content={}" + param);
         return rsaVerify(param, sign);
     }
 
@@ -157,7 +159,7 @@ public abstract class AbstractAlipay {
         return null;
     }
 
-    private boolean rsaVerify(String content, String sign) {
+    protected boolean rsaVerify(String content, String sign) {
         try {
             Signature signature = Signature.getInstance("SHA1WithRSA");
             signature.initVerify(alipayPublicKey);
@@ -176,13 +178,14 @@ public abstract class AbstractAlipay {
     }
 
     protected String decrypt(String content) {
+        LOG.trace("decrypt content={}", content);
         try {
             Cipher cipher = Cipher.getInstance("RSA");
             cipher.init(Cipher.DECRYPT_MODE, myPrivateKey);
 
             InputStream ins = new ByteArrayInputStream(DatatypeConverter.parseBase64Binary(content));
             ByteArrayOutputStream writer = new ByteArrayOutputStream();
-            // TODO change this value depends on lenght of key
+            // TODO change this value depends on length of key
             byte[] buf = new byte[256];
             int bufl;
             while ((bufl = ins.read(buf)) != -1) {
@@ -212,6 +215,24 @@ public abstract class AbstractAlipay {
             LOG.warn("Cannot decrypt content", e);
         }
         return null;
+    }
+
+    public GroupStringPair parseQueryString(final String queryString) {
+        try {
+            return GroupStringPair.parseQueryString(queryString, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            LOG.warn("Error parsing query string", e);
+            throw new AlipayException(e);
+        }
+    }
+
+    public GroupStringPair parsePostBody(final InputStream postBody) {
+        try {
+            return GroupStringPair.parsePostBody(postBody, "utf-8", "utf-8");
+        } catch (IOException e) {
+            LOG.warn("Error parsing post body", e);
+            throw new AlipayException(e);
+        }
     }
 
 }
