@@ -74,7 +74,7 @@ public class WapDirectSDK extends AbstractAlipay {
     public String create(final AlipayRequestData request) {
         List<StringPair> p = sign(request.getSortedParameters());
         try {
-            String auth = http.get("wappaygw.alipay.com", 443, "https", "/service/rest.htm?" + join(p, true));
+            String auth = http.get("wappaygw.alipay.com", 443, "https", "/service/rest.htm?" + join(p, true, false));
             GroupStringPair params = parseQueryString(auth);
             decrypt(params);
             AlipayResponseData res = AlipayResponseData.parse(params);
@@ -93,7 +93,7 @@ public class WapDirectSDK extends AbstractAlipay {
                 return null;
             }
             p = sign(makeWapAuthAndExecute(token).getSortedParameters());
-            return "https://wappaygw.alipay.com/service/rest.htm?" + join(p, true);
+            return "https://wappaygw.alipay.com/service/rest.htm?" + join(p, true, false);
         } catch (UnsupportedEncodingException e) {
             LOG.warn("Failed to create wap direct trade", e);
             return null;

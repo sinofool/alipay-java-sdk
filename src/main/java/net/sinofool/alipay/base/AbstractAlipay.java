@@ -75,20 +75,31 @@ public abstract class AbstractAlipay {
     }
 
     protected String signMD5(final List<StringPair> p) {
-        String param = join(p, false);
+        String param = join(p, false, false);
         String sign = md5Sign(param + config.getMD5KEY());
         LOG.trace("Signing {}", param);
         return sign;
     }
 
     protected String signRSA(final List<StringPair> p) {
-        String param = join(p, false);
+        String param = join(p, false, false);
+        String sign = rsaSign(param);
+        return sign;
+    }
+
+    /**
+     * Mobile SDK join the fields with quote, which is not documented at all.
+     * @param p
+     * @return
+     */
+    protected String signRSAWithQuote(final List<StringPair> p) {
+        String param = join(p, false, true);
         String sign = rsaSign(param);
         return sign;
     }
 
     protected boolean verifyRSA(String sign, List<StringPair> p) {
-        String param = join(p, false);
+        String param = join(p, false, false);
         LOG.trace("verifyRSA sing={}", sign);
         LOG.trace("verifyRSA content={}" + param);
         return rsaVerify(param, sign);
@@ -98,13 +109,16 @@ public abstract class AbstractAlipay {
         return sign.equals(signMD5(p));
     }
 
-    protected String join(final List<StringPair> p, boolean encode) {
+    protected String join(final List<StringPair> p, boolean encode, boolean quote) {
         StringBuffer buff = new StringBuffer();
         for (int i = 0; i < p.size(); ++i) {
             if (i != 0) {
                 buff.append("&");
             }
             buff.append(p.get(i).getFirst()).append("=");
+            if (quote) {
+                buff.append("\"");
+            }
             if (encode) {
                 try {
                     buff.append(URLEncoder.encode(p.get(i).getSecond(), "utf-8"));
@@ -114,6 +128,9 @@ public abstract class AbstractAlipay {
                 }
             } else {
                 buff.append(p.get(i).getSecond());
+            }
+            if (quote) {
+                buff.append("\"");
             }
         }
         return buff.toString();
