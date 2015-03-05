@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>net.sinofool</groupId>
 	<artifactId>alipay-java-sdk</artifactId>
-	<version>1.1-SNAPSHOT</version>
+	<version>1.1.0</version>
 	<packaging>jar</packaging>
 	<name>Alipay transaction Java SDK</name>
 	<description>Alipay payment system SDK</description>
