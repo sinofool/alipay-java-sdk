@@ -98,5 +98,4 @@ public class AlipayResponseData {
     public List<StringPair> getOrderedParameters(final String... skipKeys) {
         return data.getOrdered(skipKeys);
     }
-
 }
