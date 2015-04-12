@@ -1,15 +1,27 @@
 package net.sinofool.alipay;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
 import net.sinofool.alipay.base.AbstractAlipay;
+import net.sinofool.alipay.base.GroupStringPair;
 import net.sinofool.alipay.base.StringPair;
 import net.sinofool.alipay.thirdparty.org.json.JSONArray;
 import net.sinofool.alipay.thirdparty.org.json.JSONObject;
 
 import org.joda.time.DateTime;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 public class QRDirectSDK extends AbstractAlipay {
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(QRDirectSDK.class);
 
     public static class Sku {
         public Sku(String id, String name, String price) {
@@ -159,7 +171,39 @@ public class QRDirectSDK extends AbstractAlipay {
         request.setString("sign_type", "MD5");
         String body = join(signed, true, false);
         String post = http.post("mapi.alipay.com", 443, "https", "/gateway.do?_input_charset=utf-8", body);
-        return post;
+        try {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(new InputSource(new StringReader(post)));
+            doc.getDocumentElement().normalize();
+
+            boolean isSuccess = doc.getElementsByTagName("is_success").item(0).getTextContent().equals("T");
+            if (!isSuccess) {
+                return null;
+            }
+
+            String sign = doc.getElementsByTagName("sign").item(0).getTextContent();
+
+            GroupStringPair ret = new GroupStringPair();
+            NodeList childNodes = doc.getElementsByTagName("response").item(0).getFirstChild().getChildNodes();
+            for (int i = 0; i < childNodes.getLength(); ++i) {
+                String name = childNodes.item(i).getNodeName();
+                String text = childNodes.item(i).getTextContent();
+                ret.add(name, text);
+            }
+
+            String calc = signMD5(ret.getSorted());
+            if (calc.equals(sign)) {
+                return ret.get("qrcode");
+            }
+        } catch (IOException e) {
+            LOG.warn("Error parsing xml response", e);
+        } catch (ParserConfigurationException e) {
+            LOG.warn("Error parsing xml response", e);
+        } catch (SAXException e) {
+            LOG.warn("Error parsing xml response", e);
+        }
+        return null;
     }
 
     public boolean verifyReturn(AlipayResponseData p) {
