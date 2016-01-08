@@ -3,7 +3,8 @@
 
 支付宝Java SDK
 ===============
-Demo代码效率不够高，所以自己写了一个。欢迎Fork。
+官方的Demo代码效率不够高，所以自己写了一个。欢迎Fork。
+使用这个库的例子源代码在demo/目录下，测试在这里：https://oneskill.com/alipay-java-sdk-demo/
 
 V1.0
 ----
