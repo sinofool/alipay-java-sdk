@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/j2ee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+         version="2.4">
+
+    <display-name>AlipaySDK Demo Application</display-name>
+    <description>
+        This is a demo of Alipay Java SDK
+    </description>
+
+    <servlet>
+        <servlet-name>DemoServlet</servlet-name>
+        <servlet-class>net.sinofool.alipay.demo.DemoServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>DemoServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+</web-app>
